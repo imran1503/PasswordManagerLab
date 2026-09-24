@@ -21,6 +21,24 @@ def derive_key(password, salt):
         type=Type.ID
     )
 
+def encrypt_vault(vault, password):
+    message = json.dumps(vault).encode()
+
+    salt = os.urandom(16)
+    key = derive_key(password, salt)
+
+    aes = AESGCM(key)
+    nonce = os.urandom(12)
+
+    encrypted = aes.encrypt(nonce, message, None)
+
+    return {
+        "salt": salt.hex(),
+        "nonce": nonce.hex(),
+        "data": encrypted.hex()
+    }
+
+
 #Encypting a message and password using AES-GCM with a derived key from Argon2
 message = json.dumps(vault).encode()
 password = "test-password"
@@ -38,10 +56,39 @@ nonce = os.urandom(12)
 
 encrypted = aes.encrypt(nonce, message, None)
 
-print(encrypted)
+print("\nEncrypted Data: " + str(encrypted)+ "\n")
+
+vault_data = {
+    "salt": salt.hex(),
+    "nonce": nonce.hex(),
+    "data": encrypted.hex()
+}
+
+print("Vault Data: " + str(vault_data) + "\n")
+
+with open("vault.json", "w") as file:
+    json.dump(vault_data, file, indent=4)
+
+
+
 
 #Decrypting the message using the same derived key and nonce. 
+with open("vault.json", "r") as file:
+    saved_vault = json.load(file)
 
-decrypted = aes.decrypt(nonce, encrypted, None)
+saved_salt = bytes.fromhex(saved_vault["salt"])
+saved_nonce = bytes.fromhex(saved_vault["nonce"])
+saved_encrypted = bytes.fromhex(saved_vault["data"])
 
-print(decrypted)
+saved_key = derive_key(password, saved_salt)
+saved_aes = AESGCM(saved_key)
+
+saved_decrypted = saved_aes.decrypt(
+    saved_nonce,
+    saved_encrypted,
+    None
+)
+print("Saved Decrypted Data: " + str(saved_decrypted) + "\n") #bytes
+
+saved_vault_data = json.loads(saved_decrypted)
+print("Recovered Vault: " + str(saved_vault_data) + "\n") #dictionary
