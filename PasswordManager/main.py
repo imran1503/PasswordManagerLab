@@ -3,7 +3,14 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
 import json
 
-UIpassword = input("Enter vault password: ")
+while True:
+    master_password = input("Enter vault password: ")
+    master_password_confirm = input("Confirm vault password: ")
+
+    if master_password == master_password_confirm:
+        break
+
+    print("Passwords do not match. Try again.\n\n\n")
 
 vault = {
     "github": {
@@ -58,9 +65,9 @@ def decrypt_vault(vault_data, password):
     return json.loads(decrypted)
 
 
-password = UIpassword
+master_password = master_password
 
-vault_data = encrypt_vault(vault, password)
+vault_data = encrypt_vault(vault, master_password)
 
 with open("vault.json", "w") as file:
     json.dump(vault_data, file, indent=4)
@@ -69,7 +76,7 @@ with open("vault.json", "w") as file:
 with open("vault.json", "r") as file:
     saved_vault = json.load(file)
 
-recovered_vault = decrypt_vault(saved_vault, password)
+recovered_vault = decrypt_vault(saved_vault, master_password)
 
 print("Recovered Vault: " + str(recovered_vault) + "\n")
 print("Vault matches original: " + str(recovered_vault == vault))
