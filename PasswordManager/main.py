@@ -1,3 +1,11 @@
+from argon2 import PasswordHasher
+
+ph = PasswordHasher()
+
+hashed = ph.hash("test-password")
+
+print(hashed)
+
 class PasswordEntry:
     def __init__(self, name, username, password, url):
         self.name = name
