@@ -77,7 +77,7 @@ vault_data = {
     "data": encrypted.hex()
 }
 
-print("Vault Data: " + str(vault_data) + "\n")
+print("Vault Data Encrypted: " + str(vault_data) + "\n")
 
 with open("vault.json", "w") as file:
     json.dump(vault_data, file, indent=4)
