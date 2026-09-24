@@ -39,6 +39,19 @@ def encrypt_vault(vault, password):
     }
 
 
+def decrypt_vault(vault_data, password):
+    salt = bytes.fromhex(vault_data["salt"])
+    nonce = bytes.fromhex(vault_data["nonce"])
+    encrypted = bytes.fromhex(vault_data["data"])
+
+    key = derive_key(password, salt)
+
+    aes = AESGCM(key)
+
+    decrypted = aes.decrypt(nonce, encrypted, None)
+
+    return json.loads(decrypted)
+
 #Encypting a message and password using AES-GCM with a derived key from Argon2
 message = json.dumps(vault).encode()
 password = "test-password"
@@ -76,19 +89,7 @@ with open("vault.json", "w") as file:
 with open("vault.json", "r") as file:
     saved_vault = json.load(file)
 
-saved_salt = bytes.fromhex(saved_vault["salt"])
-saved_nonce = bytes.fromhex(saved_vault["nonce"])
-saved_encrypted = bytes.fromhex(saved_vault["data"])
+recovered_vault = decrypt_vault(saved_vault, password)
 
-saved_key = derive_key(password, saved_salt)
-saved_aes = AESGCM(saved_key)
-
-saved_decrypted = saved_aes.decrypt(
-    saved_nonce,
-    saved_encrypted,
-    None
-)
-print("Saved Decrypted Data: " + str(saved_decrypted) + "\n") #bytes
-
-saved_vault_data = json.loads(saved_decrypted)
-print("Recovered Vault: " + str(saved_vault_data) + "\n") #dictionary
+print("Recovered Vault: " + str(recovered_vault) + "\n")
+print("Vault matches original: " + str(recovered_vault == vault))
