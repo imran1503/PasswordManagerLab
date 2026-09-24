@@ -3,13 +3,17 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
 import json
 
+UIpassword = input("Enter vault password: ")
+
 vault = {
     "github": {
         "username": "test@example.com",
-        "password": "FakePassword123!",
+        "password": "FakeGitHubPassword123!",
         "url": "https://github.com"
     }
 }
+
+
 def derive_key(password, salt):
     return hash_secret_raw(
         password.encode(),
@@ -20,6 +24,7 @@ def derive_key(password, salt):
         hash_len=32,
         type=Type.ID
     )
+
 
 def encrypt_vault(vault, password):
     message = json.dumps(vault).encode()
@@ -52,40 +57,15 @@ def decrypt_vault(vault_data, password):
 
     return json.loads(decrypted)
 
-#Encypting a message and password using AES-GCM with a derived key from Argon2
-message = json.dumps(vault).encode()
-password = "test-password"
-salt = os.urandom(16)
 
-key = derive_key(password, salt)
+password = UIpassword
 
-aes = AESGCM(key)
-
-# Generate a unique 12-byte nonce for this AES-GCM encryption. The nonce ensures that encrypting the same plaintext with the same key doesn't produce the same ciphertext every time.
-nonce = os.urandom(12)
-
-
-# Encrypt the vault data
-
-encrypted = aes.encrypt(nonce, message, None)
-
-print("\nEncrypted Data: " + str(encrypted)+ "\n")
-
-vault_data = {
-    "salt": salt.hex(),
-    "nonce": nonce.hex(),
-    "data": encrypted.hex()
-}
-
-print("Vault Data Encrypted: " + str(vault_data) + "\n")
+vault_data = encrypt_vault(vault, password)
 
 with open("vault.json", "w") as file:
     json.dump(vault_data, file, indent=4)
 
 
-
-
-#Decrypting the message using the same derived key and nonce. 
 with open("vault.json", "r") as file:
     saved_vault = json.load(file)
 
@@ -93,3 +73,4 @@ recovered_vault = decrypt_vault(saved_vault, password)
 
 print("Recovered Vault: " + str(recovered_vault) + "\n")
 print("Vault matches original: " + str(recovered_vault == vault))
+
